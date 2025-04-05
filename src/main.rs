@@ -299,6 +299,7 @@ struct XinuxHelper {
 
 impl Completer for XinuxHelper {
     type Candidate = Pair;
+
     fn complete(
         &self,
         line: &str,
@@ -306,17 +307,47 @@ impl Completer for XinuxHelper {
         _ctx: &Context<'_>,
     ) -> Result<(usize, Vec<Pair>), ReadlineError> {
         let start = line[..pos].rfind(' ').map(|i| i + 1).unwrap_or(0);
-        let word = &line[start..pos];
-        let matches = self
-            .commands
-            .iter()
-            .filter(|cmd| cmd.starts_with(word))
-            .map(|cmd| Pair {
-                display: cmd.clone(),
-                replacement: cmd.clone(),
-            })
-            .collect();
-        Ok((start, matches))
+        let input = &line[..pos];
+        let input_parts: Vec<&str> = input.split_whitespace().collect();
+
+        let mut suggestions = Vec::new();
+
+        for command in &self.commands {
+            let command_parts: Vec<&str> = command.split_whitespace().collect();
+
+            if command_parts.len() < input_parts.len() {
+                continue;
+            }
+
+            // Check exact match for all parts except the last
+            let mut valid = true;
+            for i in 0..input_parts.len() - 1 {
+                if command_parts[i] != input_parts[i] {
+                    valid = false;
+                    break;
+                }
+            }
+
+            // Check if the last part starts with the input's last part
+            if valid {
+                if let (Some(command_last_part), Some(input_last_part)) = (
+                    command_parts.get(input_parts.len() - 1),
+                    input_parts.last(),
+                ) {
+                    if command_last_part.starts_with(input_last_part) {
+                        suggestions.push(Pair {
+                            display: command.to_string(),
+                            replacement: command.to_string(),
+                        });
+                    }
+                }
+            }
+        }
+
+        suggestions.sort_by(|a, b| a.display.cmp(&b.display));
+        suggestions.dedup_by(|a, b| a.display == b.display);
+
+        Ok((start, suggestions))
     }
 }
 
@@ -334,24 +365,33 @@ impl Hinter for XinuxHelper {
 
 impl Highlighter for XinuxHelper {
     fn highlight<'l>(&self, line: &'l str, _pos: usize) -> Cow<'l, str> {
-        let path = PathBuf::from(line.trim());
         let config = load_config();
+        let mut highlighted = String::new();
 
-        if config.aliases.contains_key(line.trim()) {
-            Cow::Owned(format!("\x1b[34m{}\x1b[0m", line)) // Dark blue for aliases
-        } else if path.is_dir() {
-            Cow::Owned(format!("\x1b[32m{}\x1b[0m", line)) // Green for directories
-        } else if self.commands.contains(&line.trim().to_string()) {
-            Cow::Owned(format!("\x1b[1;35m{}\x1b[0m", line)) // Bright magenta for executables
-        } else if path.is_file() {
-            Cow::Owned(format!("\x1b[36m{}\x1b[0m", line)) // Cyan for regular files
-        } else {
-            Cow::Owned(format!("\x1b[1;31m{}\x1b[0m", line)) // Bright red for unknown/invalid
+        for word in line.split_whitespace() {
+            if config.aliases.contains_key(word) || self.commands.contains(&word.to_string()) {
+                // Highlight commands or aliases
+                highlighted.push_str(&format!("\x1b[34m{}\x1b[0m ", word)); // Dark blue
+            } else if word.starts_with('-') {
+                // Highlight arguments
+                highlighted.push_str(&format!("\x1b[33m{}\x1b[0m ", word)); // Yellow
+            } else if PathBuf::from(word).is_dir() {
+                // Highlight directories
+                highlighted.push_str(&format!("\x1b[32m{}\x1b[0m ", word)); // Green
+            } else if PathBuf::from(word).is_file() {
+                // Highlight files
+                highlighted.push_str(&format!("\x1b[36m{}\x1b[0m ", word)); // Cyan
+            } else {
+                // Highlight invalid input
+                highlighted.push_str(&format!("\x1b[31m{}\x1b[0m ", word)); // Red
+            }
         }
+
+        Cow::Owned(highlighted.trim_end().to_string())
     }
 
     fn highlight_hint<'h>(&self, hint: &'h str) -> Cow<'h, str> {
-        Cow::Owned(format!("\x1b[38;5;239m{}\x1b[0m", hint))
+        Cow::Owned(format!("\x1b[38;5;239m{}\x1b[0m", hint)) // Gray for hints
     }
 }
 
@@ -624,8 +664,7 @@ fn main() {
                 }
             }
             Err(ReadlineError::Interrupted) => {
-                println!("\nInterrupted");
-                break;
+                
             }
             Err(ReadlineError::Eof) => {
                 println!("\nEOF");
