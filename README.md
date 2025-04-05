@@ -57,21 +57,25 @@ Welcome to **Xinux Shell**, the command-line interface (CLI) that’s so good, i
 - Aliases are saved for eternity (or until you delete them) in the configuration file. Your fingers will thank you.
 
 ---
-
 ### 5️⃣ **Built-In Commands**
-Xinux Shell comes preloaded with **essential built-in commands** that make you wonder how you ever lived without them:
-| Command               | Description                                                                 |
-|-----------------------|-----------------------------------------------------------------------------|
-| `cd`                 | Change the current directory.                                               |
-| `ls`                 | List files and directories.                                                 |
-| `clear`              | Clear the terminal screen (because chaos isn’t always fun).                 |
-| `exit` / `quit`      | Leave the shell (but we’ll miss you).                                       |
-| `help`               | Get a list of commands and feel like a genius.                              |
-| `echo`               | Print text to the terminal (because why not?).                              |
-| `xinsay`             | Like `cowsay`, but cooler.                                                  |
-| `alias`              | Create shortcuts for commands.                                              |
-| `clear history`      | Wipe your command history clean.                                            |
-| `xinux config prompt`| Change your prompt style on the fly.                                        |
+
+Xinux Shell comes preloaded with **essential built-in commands** that make your terminal experience magical:
+
+```plaintext
+Available commands:
+├── cd: Teleport to another folder dimension!
+├── ls: Summon a list of files and directories in your current realm.
+├── clear: Wipe the terminal clean like a wizard's spell.
+├── exit: Escape the Xinux universe and return to reality.
+├── help: Summon this magical scroll of wisdom.
+├── echo: Make the terminal repeat your words like a loyal parrot.
+├── xinsay: Let Xin speak with the charm of cowsay!
+├── alias: Forge shortcuts to commands like a true hacker-smith.
+├── clear history: Erase your command history like a secret agent.
+├── xinux config prompt: Redesign your prompt with style and flair.
+├── xinux config where: Reveal the sacred location of the config file.
+└── xinux reset: Reset Xinux to its pristine state, like a phoenix reborn.
+```
 
 ---
 
